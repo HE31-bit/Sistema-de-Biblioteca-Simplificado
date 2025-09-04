@@ -1,0 +1,229 @@
+using System;
+using System.Collections.Generic;
+
+class Livro
+{
+    public string Titulo;
+    public string Autor;
+    public string AnoPublicacao;
+    public bool Disponivel;
+
+    public Livro(string t, string a, string ap)
+    {
+        Titulo = t;
+        Autor = a;
+        AnoPublicacao = ap;
+        Disponivel = true;
+    }
+
+    public bool Emprestar()
+    {
+        if (Disponivel)
+        {
+            Disponivel = false;
+            return true;
+        }
+        return false;
+    }
+
+    public bool Devolver()
+    {
+        Disponivel = true;
+        return true;
+    }
+}
+
+class Pessoa
+{
+    public string Nome;
+    public string Idade;
+
+    public Pessoa(string n, string i)
+    {
+        Nome = n;
+        Idade = i;
+    }
+
+    public virtual void ExibirInfo()
+    {
+        Console.WriteLine("Nome: " + Nome + " | Idade: " + Idade);
+    }
+}
+
+class Aluno : Pessoa
+{
+    public string Matricula;
+
+    public Aluno(string n, string i, string m) : base(n, i)
+    {
+        Matricula = m;
+    }
+
+    public override void ExibirInfo()
+    {
+        Console.WriteLine("Nome: " + Nome + " | Idade: " + Idade + " | Matrícula: " + Matricula);
+    }
+}
+
+class Professor : Pessoa
+{
+    public string Disciplina;
+
+    public Professor(string n, string i, string d) : base(n, i)
+    {
+        Disciplina = d;
+    }
+
+    public override void ExibirInfo()
+    {
+        Console.WriteLine("Nome: " + Nome + " | Idade: " + Idade + " | Disciplina: " + Disciplina);
+    }
+}
+
+class Emprestimo
+{
+    public Livro Livro;
+    public Pessoa Pessoa;
+    public string DataEmprestimo;
+    public string DataDevolucao;
+
+    public Emprestimo(Livro livro, Pessoa pessoa, string de, string dd)
+    {
+        Livro = livro;
+        Pessoa = pessoa;
+        DataEmprestimo = de;
+        DataDevolucao = dd;
+    }
+
+    public void RegistrarEmprestimo()
+    {
+        Console.WriteLine($"Livro '{Livro.Titulo}' emprestado para {Pessoa.Nome} em {DataEmprestimo}");
+    }
+
+    public void RegistrarDevolucao()
+    {
+        Console.WriteLine($"Livro '{Livro.Titulo}' devolvido por {Pessoa.Nome} em {DataDevolucao}");
+    }
+}
+
+class Biblioteca
+{
+    public List<Livro> Livros = new List<Livro>();
+    public List<Emprestimo> Emprestimos = new List<Emprestimo>();
+
+    public void AdicionarLivro(Livro livro)
+    {
+        Livros.Add(livro);
+    }
+
+    public void ListarLivrosDisponiveis()
+    {
+        Console.WriteLine("\n--- Livros Disponíveis ---");
+        foreach (var livro in Livros)
+        {
+            if (livro.Disponivel)
+                Console.WriteLine($"{livro.Titulo} - {livro.Autor} ({livro.AnoPublicacao})");
+        }
+    }
+
+    public void RegistrarEmprestimo(Emprestimo emprestimo)
+    {
+        if (emprestimo.Livro.Emprestar())
+        {
+            Emprestimos.Add(emprestimo);
+            emprestimo.RegistrarEmprestimo();
+        }
+        else
+        {
+            Console.WriteLine("Livro indisponível para empréstimo.");
+        }
+    }
+
+    public void RegistrarDevolucao(Emprestimo emprestimo)
+    {
+        emprestimo.Livro.Devolver();
+        emprestimo.RegistrarDevolucao();
+    }
+}
+
+class Program
+{
+    public static void Main(string[] args)
+    {
+        Biblioteca biblioteca = new Biblioteca();
+        bool loop = true;
+
+        while (loop)
+        {
+            Console.Clear();
+            Console.WriteLine("Bem-vindo à Biblioteca!\nEscolha uma opção:");
+            Console.WriteLine("\n(1) Cadastrar livro \n(2) Listar livros disponíveis \n(3) Realizar empréstimo \n(4) Realizar devolução \n(5) Sair");
+
+            int resposta = int.Parse(Console.ReadLine());
+
+            switch (resposta)
+            {
+                case 1:
+                    Console.WriteLine("Digite o Titulo, o Autor e o Ano de Publicação:");
+                    string titulo = Console.ReadLine();
+                    string autor = Console.ReadLine();
+                    string ano = Console.ReadLine();
+
+                    Livro novoLivro = new Livro(titulo, autor, ano);
+                    biblioteca.AdicionarLivro(novoLivro);
+                    Console.WriteLine("Livro adicionado com sucesso!");
+                    break;
+
+                case 2:
+                    biblioteca.ListarLivrosDisponiveis();
+                    break;
+
+                case 3:
+                    Console.WriteLine("Digite o título do livro:");
+                    string tituloEmp = Console.ReadLine();
+                    Console.WriteLine("Digite o nome da pessoa:");
+                    string nome = Console.ReadLine();
+
+                    Livro livroEmp = biblioteca.Livros.Find(l => l.Titulo == tituloEmp);
+                    if (livroEmp != null)
+                    {
+                        Pessoa pessoaEmp = new Pessoa(nome, "0"); // Idade fictícia
+                        Emprestimo emprestimo = new Emprestimo(livroEmp, pessoaEmp, DateTime.Now.ToShortDateString(), "");
+                        biblioteca.RegistrarEmprestimo(emprestimo);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Livro não encontrado.");
+                    }
+                    break;
+
+                case 4:
+                    Console.WriteLine("Digite o título do livro para devolução:");
+                    string tituloDev = Console.ReadLine();
+                    Emprestimo empDev = biblioteca.Emprestimos.Find(e => e.Livro.Titulo == tituloDev && !e.Livro.Disponivel);
+                    if (empDev != null)
+                    {
+                        empDev.DataDevolucao = DateTime.Now.ToShortDateString();
+                        biblioteca.RegistrarDevolucao(empDev);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Nenhum empréstimo ativo encontrado para este livro.");
+                    }
+                    break;
+
+                case 5:
+                    Console.WriteLine("Encerrando o programa... Até logo!");
+                    loop = false;
+                    break;
+
+                default:
+                    Console.WriteLine("Opção inválida.");
+                    break;
+            }
+
+            Console.WriteLine("\nPressione qualquer tecla para continuar...");
+            Console.ReadKey();
+        }
+    }
+}
